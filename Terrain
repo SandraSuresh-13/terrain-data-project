@@ -1,0 +1,77 @@
+import pandas as pd
+
+def generate_terrain_database():
+    data = {
+        'terrain': ['boundary', 'road', 'river side', 'civil station'],
+        'distance (in km)': [0, 0.5, 1.5, 3]
+    }
+
+    df = pd.DataFrame(data)
+
+    # Assume a linear path starting from (0, 0)
+    start_coords = (0, 0)
+    terrain_database = {}
+
+    for index, row in df.iterrows():
+        terrain_name = row['terrain']
+        distance = row['distance (in km)']
+        
+        if index == 0:
+            # Starting point
+            latitude = start_coords[0]
+            longitude = start_coords[1]
+        else:
+           
+            prev_coords = terrain_database.get(terrain_name, [])
+            if prev_coords:
+                prev_latitude = prev_coords[-1]['latitude']
+                prev_longitude = prev_coords[-1]['longitude']
+                latitude = prev_latitude + distance
+                longitude = prev_longitude + distance
+            else:
+                latitude = distance
+                longitude = distance
+        
+        if terrain_name not in terrain_database:
+            terrain_database[terrain_name] = []
+        
+        terrain_database[terrain_name].append({
+            'latitude': latitude,
+            'longitude': longitude
+        })
+    
+    return terrain_database
+
+def query_terrain_database(terrain_database):
+    road_points = terrain_database.get('road', []) 
+    civil_station_points = terrain_database.get('civil station', [])
+    # Exclude points from "civil station" if they exist
+    filtered_road_points = [point for point in road_points if point not in civil_station_points]
+
+    # Print the filtered points
+    print("Points with terrain 'road' without 'civil station':")
+    for point in filtered_road_points:
+        print(f"Latitude: {point['latitude']}, Longitude: {point['longitude']}")
+
+def main():
+    try:
+        # Generate terrain database
+        terrain_database = generate_terrain_database()
+        
+        # Print or process terrain database
+        print("Terrain Coordinates Database:")
+        for terrain, coordinates in terrain_database.items():
+            print(f"Terrain: {terrain}")
+            for coord in coordinates:
+                print(f"Latitude: {coord['latitude']}, Longitude: {coord['longitude']}")
+        
+        print()
+        
+        # Query terrain database
+        query_terrain_database(terrain_database)
+    
+    except KeyError as e:
+        print(f"KeyError: {e}. Make sure all required terrain types are defined in the data.")
+
+if __name__ == "__main__":
+    main()
